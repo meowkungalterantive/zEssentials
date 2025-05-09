@@ -4,6 +4,26 @@ on:
   push:
     tags:
       - 'v*' # Trigger on version tags
+  workflow_dispatch: # This enables manual triggering
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+      release_name:
+        description: 'Release name'
+        required: true
+        type: string
+      is_draft:
+        description: 'Create as draft release'
+        required: true
+        type: boolean
+        default: false
+      is_prerelease:
+        description: 'Create as pre-release'
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -17,7 +37,7 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
-        java-version: '21' # You can change this to your preferred Java version
+        java-version: '17' # You can change this to your preferred Java version
         distribution: 'temurin'
         
     - name: Setup Gradle
@@ -30,8 +50,10 @@ jobs:
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
+        name: ${{ github.event.inputs.release_name || github.ref_name }}
         files: |
           build/libs/*.jar
         generate_release_notes: true
-        draft: false
-        prerelease: false
+        draft: ${{ github.event.inputs.is_draft || false }}
+        prerelease: ${{ github.event.inputs.is_prerelease || false }}
